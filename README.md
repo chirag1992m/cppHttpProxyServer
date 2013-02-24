@@ -26,7 +26,7 @@ GET http://www.google.com/ HTTP/1.0
 Also accepts HTTP/1.1 requests, but forwards the request to remote(origin) server with HTTP version 1.0
 *	Closes the client and remote server connection after a request is complete.
 *	Parses the given HTTP request, separates the different parts of the requests into a map of (string, string) to make a well formatted string to be forwarded. 
-*	Proxy works behind another proxy (without authentication). NOTE: Proxy details have to be specified in the code using a macro, file: http_proxy.cpp
+*	*NOT IMPLEMENTED* Proxy works behind another proxy (without authentication). NOTE: Proxy details have to be specified in the code using a macro, file: http_proxy.cpp
 
 ##IMPLEMENTATION DETAILS
 1.	`http_proxy.cpp` contains the flow of the program, i.e.,

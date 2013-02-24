@@ -10,6 +10,80 @@ bool HttpRequestsParser::getParsed() {
 	return parsed;
 }
 
+void HttpRequestsParser::setStatus(int stat) {
+	status = stat;
+}
+
+bool HttpRequestsParser::setMethod(std::string &temp_method) {
+	
+	for(method = 1; method < 9; method++) {
+		if(temp_method.compare(getMethodName()) == 0)
+			return true;
+	}
+	
+	return false;
+}
+
+bool HttpRequestsParser::setVersion(std::string &temp_version) {
+	
+	for(version = 1; version < 3; version++) {
+		if(temp_version.compare(getVersionString()) == 0)
+			return true;
+	}
+	
+	return false;
+}
+
+bool HttpRequestsParser::setURI(std::string &temp_uri) {
+	machineName = "";
+	relativePath = "";
+	machinePort = "";
+	
+	if(temp_uri.size() < 1)
+		return false;
+	//Checking if the given uri is an absolute path or a relative one
+	if(temp_uri[0] == '/'){	//relative path
+		relativePath = temp_uri;
+		return true;
+		
+	} else {	//absolute path
+		if(temp_uri.substr(0, 7).compare(std::string("http://")) != 0 && temp_uri.substr(0, 7).compare(std::string("HTTP://")) != 0)
+			return false;
+		else {
+			std::string hierarchicalPart = temp_uri.substr(7, std::string::npos);
+			size_t end = hierarchicalPart.find(":", 0);
+			
+			if(end != std::string::npos) {
+				machineName = hierarchicalPart.substr(0, end);
+				
+				size_t end_url = hierarchicalPart.find("/", 0);
+				
+				machinePort = hierarchicalPart.substr(end+1, end_url-end-1);
+				relativePath = hierarchicalPart.substr(end_url, std::string::npos);
+			} else {
+				end = hierarchicalPart.find("/", 0);
+				machineName = hierarchicalPart.substr(0, end);
+				relativePath = hierarchicalPart.substr(end, std::string::npos);
+				machinePort = std::string("80");
+			}
+		}
+	}
+	
+	return true;
+}
+
+int HttpRequestsParser::setBadRequest() {
+	setStatus(2);
+	parsed = true;
+	return status;
+}
+
+int HttpRequestsParser::setNotImplemented() {
+	setStatus(1);
+	parsed = true;
+	return status;
+}
+
 void HttpRequestsParser::tokenizeString(std::string &theString, std::vector<std::string> &tokens, std::string &delimiter) {
 	if(delimiter.size() <= 0 || theString.size() <= 0)
 		return;
@@ -27,68 +101,6 @@ void HttpRequestsParser::tokenizeString(std::string &theString, std::vector<std:
 			tokens.pop_back();
 		}
 	}
-}
-
-void HttpRequestsParser::setStatus(int stat) {
-	status = stat;
-}
-
-bool HttpRequestsParser::setMethod(std::string &temp_method) {
-	
-	for(method = 1; method < 9; method++) {
-		if(temp_method.compare(getMethodName()) == 0)
-			return true;
-	}
-	
-	return false;
-}
-
-bool HttpRequestsParser::setURI(std::string &temp_uri) {
-	machineName = "";
-	relativePath = "";
-	
-	if(temp_uri.size() < 1)
-		return false;
-	//Checking if the given uri is an absolute path or a relative one
-	if(temp_uri[0] == '/'){	//relative path
-		relativePath = temp_uri;
-		return true;
-		
-	} else {	//absolute path
-		if(temp_uri.substr(0, 7).compare(std::string("http://")) != 0 && temp_uri.substr(0, 7).compare(std::string("HTTP://")) != 0)
-			return false;
-		else {
-			std::string hierarchicalPart = temp_uri.substr(7, std::string::npos);
-			size_t end = hierarchicalPart.find("/", 0);
-			
-			machineName = hierarchicalPart.substr(0, end);
-			relativePath = hierarchicalPart.substr(end, std::string::npos);
-		}
-	}
-	
-	return true;
-}
-
-bool HttpRequestsParser::setVersion(std::string &temp_version) {
-	
-	for(version = 1; version < 3; version++) {
-		if(temp_version.compare(getVersionString()) == 0)
-			return true;
-	}
-	
-	return false;
-}
-
-int HttpRequestsParser::setBadRequest() {
-	setStatus(2);
-	parsed = true;
-	return status;
-}
-
-int HttpRequestsParser::setNotImplemented() {
-	setStatus(1);
-	parsed = true;
-	return status;
 }
 
 void HttpRequestsParser::lowerCase(std::string &strToConvert) {
@@ -119,13 +131,14 @@ void HttpRequestsParser::makeFormattedRequest() {
 		formattedString += std::string(" ");
 	formattedString += relativePath;
 		formattedString += std::string(" ");
-	version = 1;
 	formattedString += getVersionString();
 		formattedString += std::string("\r\n");
 	
 	//making the other lines
 	std::map<std::string ,std::string>::iterator it;
 	for(it = headers.begin(); it != headers.end(); ++it) {
+		//if(it->second.compare("keep-alive") == 0)
+			//continue;
 		formattedString += it->first;
 			formattedString += std::string(":");
 		formattedString += it->second;
@@ -140,11 +153,15 @@ int HttpRequestsParser::parse() {
 	
 	if(requestString.length() < 1)
 		return setBadRequest();
+	
 	//first checking if delimited by \r or \r\n
 	size_t pos = requestString.find("\r\n");
 	if(pos == std::string::npos) {
-		//std::cout<<"replacing!!!!!"<<std::endl<<std::endl;
-		requestString.replace(requestString.begin(), requestString.end(), "\r", "\r\n");
+		pos = requestString.find("\r");
+		if(pos == std::string::npos)
+			return setBadRequest();
+		else
+			requestString.replace(requestString.begin(), requestString.end(), "\r", "\r\n");
 	} else {
 		//std::cout<<"found!!!!!"<<std::endl<<std::endl;
 	}
@@ -229,19 +246,28 @@ int HttpRequestsParser::parse() {
 	std::map<std::string ,std::string>::iterator it;
 	it = headers.find(std::string("host"));
 	if(machineName.size() == 0) {
-		if(it != headers.end())
+		if(it != headers.end()) {
 			machineName = it->second;
+			size_t end = machineName.find(":", 0);
+			
+			if(end != std::string::npos) {
+				machinePort = machineName.substr(end+1, std::string::npos);
+				machineName = machineName.substr(0, end);
+			} else {
+				machinePort = std::string("80");
+			}
+		}
 		else {
 			//std::cout<<"machine name not found!";
 			return setBadRequest();
 		}
 	} else {
 		if(it == headers.end())
-			headers.insert(std::pair<std::string, std::string>(std::string("host"), std::string(machineName)));
+			headers.insert(std::pair<std::string, std::string>(std::string("host"), machineName+std::string(":")+machinePort));
 	}
 	
 	//Got a 200-OK request
-	//making a formatted requested to be forwarded to the server
+	//making a formatted requested.
 	makeFormattedRequest();
 	
 	setStatus(0);
@@ -256,6 +282,10 @@ std::string HttpRequestsParser::getFormattedRequest() {
 
 std::string HttpRequestsParser::getHostName() {
 	return machineName;
+}
+
+std::string HttpRequestsParser::getMachinePort() {
+	return machinePort;
 }
 
 std::string HttpRequestsParser::getVersionString() {
@@ -291,7 +321,7 @@ std::string HttpRequestsParser::getMethodName() {
 }
 
 std::string HttpRequestsParser::getFullURL() {
-	return machineName+relativePath;
+	return machineName+std::string(":")+machinePort+relativePath;
 }
 
 void HttpRequestsParser::clear() {

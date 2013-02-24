@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
 				sprintf(message, "Connecting to host through ProxyClient");
 				EventLogger::logEvent(message);
 				client.setHost(parser.getHostName());
+				client.setPort(parser.getMachinePort());
 				if(!client.setupClient()) {
 					sprintf(message, "Couldn't connect to given host.");
 					EventLogger::logError(message);

@@ -30,6 +30,7 @@ class HttpRequestsParser {
 		int method;
 		std::string relativePath;
 		std::string machineName;
+		std::string machinePort;
 		int version;
 		
 		int status;
@@ -74,6 +75,7 @@ class HttpRequestsParser {
 		std::string getVersionString();
 		std::string getMethodName();
 		std::string getFullURL();
+		std::string getMachinePort();
 		
 		void clear();
 };
