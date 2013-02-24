@@ -6,3 +6,8 @@
 
 #executables
 proxy
+
+#documentation
+*.docx
+*.doc
+*.png
