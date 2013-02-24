@@ -1,0 +1,8 @@
+#object files
+*.o
+
+#backup files
+*~
+
+#executables
+proxy
