@@ -176,16 +176,18 @@ int main(int argc, char *argv[]) {
 					
 					//taking reply from host
 					//client.setReceiveTimeout(5);
-					sprintf(message, "Receiving reply from host!");
-					EventLogger::logEvent(message);
-					length = client.receiveMessage(buf, maxLength);
-					sprintf(message, "%d length of reply received.", length);
-					EventLogger::logEvent(message);
-					
-					//forwarding reply to client
-					sprintf(message, "Forwarding reply from host to client.");
-					EventLogger::logEvent(message);
-					server.sendMessage(buf, length);
+					do {
+						sprintf(message, "Receiving reply from host!");
+						EventLogger::logEvent(message);
+						length = client.receiveMessage(buf, maxLength);
+						sprintf(message, "%d length of reply received.", length);
+						EventLogger::logEvent(message);
+						
+						//forwarding reply to client
+						sprintf(message, "Forwarding reply from host to client.");
+						EventLogger::logEvent(message);
+						server.sendMessage(buf, length);
+					} while(length > 0);
 					
 					client.closeConnection();
 				}
