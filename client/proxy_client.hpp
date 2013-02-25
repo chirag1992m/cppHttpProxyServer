@@ -7,6 +7,7 @@
 #include "../eventLogger/eventLogger.hpp"
 #include <cstdio>
 #include <cerrno>
+#include <unistd.h>
 
 #include <netdb.h>
 #include <arpa/inet.h>

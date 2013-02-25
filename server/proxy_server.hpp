@@ -14,6 +14,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cerrno>
+#include <unistd.h>
 
 //including the networking libraries
 #include <netdb.h>      // definitions for network database operations
