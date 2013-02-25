@@ -12,6 +12,12 @@
 GET http://www.google.com/ HTTP/1.0
 6.	The headers and HTML of the Google homepage will be displayed on the terminal screen.
 
+##EXIT THE SERVER
+* You can exit the server by simply using `Ctrl + C`
+* Or connect to the server using telnet:
+	* type: `quitServer`
+	* press Carriage Return(Enter) twice
+
 ##LIMITATIONS
 *	It does not handle concurrent requests, only sequential requests.
 *	Only HTTP/1.0 implemented.
