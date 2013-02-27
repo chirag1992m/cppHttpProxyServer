@@ -1,5 +1,5 @@
 #include "http_requests_parser.hpp"
-
+#include <iostream>
 void HttpRequestsParser::setRequest(std::string request) {
 	requestString = request;
 	formattedString = "";
@@ -15,7 +15,7 @@ void HttpRequestsParser::setStatus(int stat) {
 }
 
 bool HttpRequestsParser::setMethod(std::string &temp_method) {
-	
+	upperCase(temp_method);
 	for(method = 1; method < 9; method++) {
 		if(temp_method.compare(getMethodName()) == 0)
 			return true;
@@ -26,6 +26,7 @@ bool HttpRequestsParser::setMethod(std::string &temp_method) {
 
 bool HttpRequestsParser::setVersion(std::string &temp_version) {
 	
+	upperCase(temp_version);
 	for(version = 1; version < 3; version++) {
 		if(temp_version.compare(getVersionString()) == 0)
 			return true;
@@ -35,9 +36,11 @@ bool HttpRequestsParser::setVersion(std::string &temp_version) {
 }
 
 bool HttpRequestsParser::setURI(std::string &temp_uri) {
+	//std::cout<<"urihere"<<std::endl;
 	machineName = "";
 	relativePath = "";
 	machinePort = "";
+	std::string protocol;
 	
 	if(temp_uri.size() < 1)
 		return false;
@@ -47,11 +50,22 @@ bool HttpRequestsParser::setURI(std::string &temp_uri) {
 		return true;
 		
 	} else {	//absolute path
-		if(temp_uri.substr(0, 7).compare(std::string("http://")) != 0 && temp_uri.substr(0, 7).compare(std::string("HTTP://")) != 0)
+	//std::cout<<"urihere"<<std::endl;
+		size_t end;
+		end = temp_uri.find(std::string("://"));
+		if(end == std::string::npos)
 			return false;
 		else {
-			std::string hierarchicalPart = temp_uri.substr(7, std::string::npos);
-			size_t end = hierarchicalPart.find(":", 0);
+			protocol = temp_uri.substr(0, end+1);
+			lowerCase(protocol);
+		}
+	//std::cout<<"urihere"<<std::endl;
+		if(protocol.compare(std::string("http")) == 0)
+			return false;
+		else {
+	//std::cout<<"urihere"<<std::endl;
+			std::string hierarchicalPart = temp_uri.substr(end+3, std::string::npos);
+			end = hierarchicalPart.find(":", 0);
 			
 			if(end != std::string::npos) {
 				machineName = hierarchicalPart.substr(0, end);
@@ -100,6 +114,12 @@ void HttpRequestsParser::tokenizeString(std::string &theString, std::vector<std:
 		if(tokens.back().compare(delimiter) == 0 || tokens.back().size() == 0) {
 			tokens.pop_back();
 		}
+	}
+}
+
+void HttpRequestsParser::upperCase(std::string &strToConvert) {
+	for(unsigned int i=0;i<strToConvert.length();i++) {
+		strToConvert[i] = toupper(strToConvert[i]);
 	}
 }
 
@@ -179,12 +199,13 @@ int HttpRequestsParser::parse() {
 	*/
 	delimiter = std::string(" ");
 	tokenizeString(lines[0], words, delimiter);
-	
+	//std::cout<<"here"<<std::endl;
 	if(lines[0][0] == ' ')		//checking if the first character is a space or not which is not allowed in a intial line of request
 		return setBadRequest();
 	if(words.size() != 3) {		//exactly 3 parts in the request are necessary
 		return setBadRequest();
 	} else {
+		//std::cout<<"here"<<std::endl;
 		bool temp = setMethod(words[0]);
 		if(!temp) {
 //			std::cout<<"wrong method!";
@@ -206,10 +227,11 @@ int HttpRequestsParser::parse() {
 			return setBadRequest();
 		}
 	}
-	
+	//std::cout<<"here"<<std::endl;
 	/*
 	 * Parsing all the other headers given */
 	if(lines.size() > 1) {
+		//std::cout<<"here"<<std::endl;
 		size_t end = 0;
 		std::string headerName, headerVal;
 		//parsing the first header
@@ -242,7 +264,7 @@ int HttpRequestsParser::parse() {
 		trim(headerVal);
 		headers.insert(std::pair<std::string, std::string>(headerName, headerVal));
 	}
-	
+	//std::cout<<"here"<<std::endl;
 	std::map<std::string ,std::string>::iterator it;
 	it = headers.find(std::string("host"));
 	if(machineName.size() == 0) {
@@ -265,7 +287,7 @@ int HttpRequestsParser::parse() {
 		if(it == headers.end())
 			headers.insert(std::pair<std::string, std::string>(std::string("host"), machineName+std::string(":")+machinePort));
 	}
-	
+	//std::cout<<"here"<<std::endl;
 	//Got a 200-OK request
 	//making a formatted requested.
 	makeFormattedRequest();

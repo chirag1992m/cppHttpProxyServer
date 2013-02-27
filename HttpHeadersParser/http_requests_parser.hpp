@@ -49,6 +49,7 @@ class HttpRequestsParser {
 		void makeFormattedRequest();
 		
 		void lowerCase(std::string &);
+		void upperCase(std::string &);
 		void trim(std::string &);
 		
 	public:
